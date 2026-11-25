@@ -1,4 +1,4 @@
-# 压缩路由
+# 摘要路由
 
 为 DSH 的上下文压缩摘要单独指定模型。
 
@@ -66,7 +66,7 @@ const options = { provider, model, messages, maxTokens, sessionId, purpose: 'com
 | `failureBackoffMs` | 全失败后的冷却，默认 60000 |
 | `announceReroute` | 摘要改由别的模型写时，在会话里留一行提示（`form: 'notice'` 的 user message，进入模型上下文；默认关） |
 
-会话级覆盖由命令写入会话日志（`plugin:dsh-compaction-router/selected`，`ignorable` 标记，随会话恢复）。
+会话级覆盖由命令写入会话日志（`plugin:dsh-summary-router/selected`，`ignorable` 标记，随会话恢复）。
 
 ## 兼容性
 

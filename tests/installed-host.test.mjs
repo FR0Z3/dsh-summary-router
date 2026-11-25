@@ -27,7 +27,7 @@ async function run({ summaryFailure = 'rate-limit', summaryThrows = false, engin
   const { TokenMeter } = await load('dsh-token-meter')
 
   const ctx = new Context()
-  const session = Session.create(SessionId(`compaction-router-${Math.random().toString(16).slice(2, 8)}`))
+  const session = Session.create(SessionId(`dsh-summary-router-${Math.random().toString(16).slice(2, 8)}`))
   const committed = { provider: 'flaky', model: 'old' }
   const target = { provider: 'sane', model: 'new' }
   const fallback = { provider: 'sane', model: 'fallback' }

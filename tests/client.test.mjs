@@ -6,7 +6,7 @@ const require = createRequire(import.meta.url)
 const React = require('react')
 const { act, create } = require('react-test-renderer')
 
-const NS = 'dsh-compaction-router'
+const NS = 'dsh-summary-router'
 
 // The bundle registers itself through the module loader, and an ES module is
 // evaluated once: capture its factory here and reuse it for every test.

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Compaction router",
+    "title": "Summary router",
     "description": "Choose the model that writes compaction summaries, per session and per workspace, with fallback chains.",
     "detail": "docs/DETAIL.md"
   },
@@ -44,7 +44,7 @@
   "purposesHint": "Comma separated; the summarizer's purpose is compaction.",
   "commandTitle": "Session command",
   "commandHint": "/compact-model shows the routes; /compact-model provider/model [effort] pins one route for this session; /compact-model off clears it.",
-  "sidebarTitle": "Compaction router",
+  "sidebarTitle": "Summary router",
   "sidebarHint": "See and change the models compaction summaries use.",
   "saveFailed": "Save failed",
   "notWritable": "This configuration is not writable.",

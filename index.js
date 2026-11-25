@@ -1,5 +1,5 @@
 /**
- * Host side of the compaction router: reroute compaction summary calls to the
+ * Host side of the summary router: reroute compaction summary calls to the
  * model each session (or workspace) chose, with a fallback chain.
  *
  * The seam is `llm/stream`, the waterfall every model call passes through.
@@ -24,13 +24,13 @@ import {
 } from './logic.js'
 
 /** Marks a request this plugin already routed, so the replacement call cannot re-enter. */
-const ROUTED = Symbol.for('dsh-compaction-router.routed')
+const ROUTED = Symbol.for('dsh-summary-router.routed')
 
 /** Plugin-record type carrying the per-session selection, safe to replay on resume. */
-const RECORD = 'plugin:dsh-compaction-router/selected'
+const RECORD = 'plugin:dsh-summary-router/selected'
 
 /** Prefix every diagnostic this plugin writes shares. */
-const SCOPE = 'compaction router'
+const SCOPE = 'summary router'
 
 /** Conclusion of one attempt. */
 const OK = 'ok'
@@ -96,7 +96,7 @@ async function userMessageOf(text) {
   // TypeScript-side `MessageSourceMap` entry is a compile-time concern only.
   return createUserMessage({
     content: [{ type: 'text', text }],
-    source: { kind: 'compaction-router', form: 'notice', summary: text },
+    source: { kind: 'dsh-summary-router', form: 'notice', summary: text },
   })
 }
 
@@ -596,7 +596,7 @@ export function apply(ctx, rawConfig) {
         const state = stateFor(session)
         const { evidence, problem } = safePlan(session, state)
         if (problem !== undefined) {
-          return { kind: 'error', text: `The compaction router configuration is unusable: ${problem}` }
+          return { kind: 'error', text: `The summary router configuration is unusable: ${problem}` }
         }
         const argument = String(rawInput ?? '').trim()
         if (argument.length === 0 || argument === 'status') {

@@ -81,7 +81,7 @@ test('the most specific workspace wins and matching is case and separator tolera
       { path: 'e:/misc/DSH-Plugin-Coding/' },
     ],
   })
-  const match = workspaceFor(config, 'E:\\Misc\\DSH-Plugin-Coding\\compaction-router')
+  const match = workspaceFor(config, 'E:\\Misc\\DSH-Plugin-Coding\\dsh-summary-router')
   assert.equal(pathKey(match.path), pathKey('E:/misc/DSH-Plugin-Coding'))
   assert.equal(workspaceFor(config, 'E:\\Misc\\Other'), config.workspaces[1])
   assert.equal(workspaceFor(config, 'E:\\Miscreant'), undefined)

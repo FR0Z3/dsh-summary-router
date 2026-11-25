@@ -1,6 +1,6 @@
 [中文](README.md)
 
-# dsh-compaction-router
+# dsh-summary-router
 
 Choose the model that writes DeepSeek Harness compaction summaries: the compaction a model switch runs, automatic pressure compaction, context-overflow recovery, and the manual `/compact` command. Session, workspace, and global scopes, with fallback chains.
 
@@ -23,7 +23,7 @@ DSH writes compaction summaries with the session's routed model. At a model swit
 
 ## Usage
 
-Under **Plugins → Compaction router**:
+Under **Plugins → Summary router**:
 
 | Goal | Action |
 |---|---|
@@ -43,7 +43,7 @@ An empty chain means the trigger is not rerouted at all, exactly as if the plugi
 
 ### BetterSidebar
 
-When `dsh-better-sidebar` is installed the plugin registers a "Compaction router" tab (start page card, bottom `+` menu, and the native right pane). Without it the plugin simply shows up in DSH settings.
+When `dsh-better-sidebar` is installed the plugin registers a "Summary router" tab (start page card, bottom `+` menu, and the native right pane). Without it the plugin simply shows up in DSH settings.
 
 ## Coexistence with surcharge-guard
 

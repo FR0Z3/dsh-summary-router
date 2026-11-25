@@ -1,23 +1,23 @@
 /**
- * Browser half of the compaction router: the settings page and the optional
+ * Browser half of the summary router: the settings page and the optional
  * BetterSidebar tab. Both render the same panel, so a profile without the third
- * party sidebar still gets a full editor under Plugins → Compaction router.
+ * party sidebar still gets a full editor under Plugins → Summary router.
  *
  * The bundle is a browser artifact: it registers itself through the module
  * loader and has no `export` statements of its own.
  */
 window.__ModuleLoader__.load({
-  id: 'dsh-compaction-router',
+  id: 'dsh-summary-router',
   factory(require) {
     const React = require('react')
     const h = React.createElement
-    const NS = 'dsh-compaction-router'
+    const NS = 'dsh-summary-router'
     const NAMESPACES = [`include:${NS}`, NS]
 
     /** Strings duplicated verbatim into `locale/<lang>.json`; check-locale keeps them in step. */
     const zh = {
       "intro": "压缩摘要请求会单独路由到你选的模型。会话 > 工作区 > 全局，逐级覆盖。",
-      "enabled": "启用压缩路由",
+      "enabled": "启用摘要路由",
       "enabledHint": "关闭后所有压缩都恢复使用会话自己的模型。",
       "pressureTitle": "省钱链（自动压缩、上下文溢出、手动 /compact）",
       "pressureHint": "按顺序尝试；失败的路线会被跳过，成功的摘要交给主对话模型。",
@@ -56,7 +56,7 @@ window.__ModuleLoader__.load({
       "purposesHint": "逗号分隔；摘要调用固定是 compaction。",
       "commandTitle": "会话内命令",
       "commandHint": "/compact-model 查看当前路线；/compact-model provider/model [等级] 只在当前会话固定一条路线；/compact-model off 清除。",
-      "sidebarTitle": "压缩路由",
+      "sidebarTitle": "摘要路由",
       "sidebarHint": "查看和修改压缩摘要使用哪些模型。",
       "saveFailed": "保存失败",
       "notWritable": "当前配置不可写。",
@@ -103,7 +103,7 @@ window.__ModuleLoader__.load({
       "purposesHint": "Comma separated; the summarizer's purpose is compaction.",
       "commandTitle": "Session command",
       "commandHint": "/compact-model shows the routes; /compact-model provider/model [effort] pins one route for this session; /compact-model off clears it.",
-      "sidebarTitle": "Compaction router",
+      "sidebarTitle": "Summary router",
       "sidebarHint": "See and change the models compaction summaries use.",
       "saveFailed": "Save failed",
       "notWritable": "This configuration is not writable.",

@@ -1,4 +1,4 @@
-# Compaction router: pick the model that writes compaction summaries.
+# Summary router: pick the model that writes compaction summaries.
 #
 # The row id doubles as the settings namespace the Client settings page edits,
 # so keep it identical to the package name.
@@ -6,8 +6,8 @@
 # Every field is volatile: the settings page writes them and a change must
 # take effect on the next summary call rather than restarting the plugin.
 - insert:
-    - id: dsh-compaction-router
-      name: 'dsh-compaction-router'
+    - id: dsh-summary-router
+      name: 'dsh-summary-router'
       config:
         enabled: true
         purposes:

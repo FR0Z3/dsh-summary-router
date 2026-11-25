@@ -3,7 +3,7 @@
  * routing. No Cordis, no I/O, no clock: every input is an argument so the rules
  * can be tested without a running Harness.
  *
- * @module dsh-compaction-router/logic
+ * @module dsh-summary-router/logic
  */
 
 /** Values used when the row's config omits a field. */

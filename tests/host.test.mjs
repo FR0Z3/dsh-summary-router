@@ -371,7 +371,7 @@ test('the reroute notice is posted only after a successful compaction closes', a
   setAnnounceFactory(text => ({
     role: 'user',
     content: [{ type: 'text', text }],
-    source: { kind: 'compaction-router', form: 'notice', summary: text },
+    source: { kind: 'dsh-summary-router', form: 'notice', summary: text },
   }))
   const fx = harness({ announceReroute: true, pressureRoutes: [{ provider: 'cheap', model: 'small' }] })
   const session = sessionOf()

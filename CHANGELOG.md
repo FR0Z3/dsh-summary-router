@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0
+
+- Rename the package to dsh-summary-router: the settings namespace, Loader row id, plugin-record type and settings titles follow. The plugin routes *summary* writes, not compaction policy, and the old name collided with that reading.
+
 ## 0.1.2
 
 - Coexist with a backend that already chose a summary model (the surcharge guard's per-rule route, a preset-level setting): when the request's provider matches the chain's first route, that model runs first with its own reasoning effort and the chain backs it up; when the provider differs, the chain stays in charge. Each attempt keeps its own effort.

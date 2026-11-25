@@ -1,11 +1,11 @@
 {
   "meta": {
-    "title": "压缩路由",
+    "title": "摘要路由",
     "description": "为上下文压缩单独指定模型，按会话和工作区生效，并可配置失败回退链。",
     "detail": "docs/DETAIL.md"
   },
   "intro": "压缩摘要请求会单独路由到你选的模型。会话 > 工作区 > 全局，逐级覆盖。",
-  "enabled": "启用压缩路由",
+  "enabled": "启用摘要路由",
   "enabledHint": "关闭后所有压缩都恢复使用会话自己的模型。",
   "pressureTitle": "省钱链（自动压缩、上下文溢出、手动 /compact）",
   "pressureHint": "按顺序尝试；失败的路线会被跳过，成功的摘要交给主对话模型。",
@@ -44,7 +44,7 @@
   "purposesHint": "逗号分隔；摘要调用固定是 compaction。",
   "commandTitle": "会话内命令",
   "commandHint": "/compact-model 查看当前路线；/compact-model provider/model [等级] 只在当前会话固定一条路线；/compact-model off 清除。",
-  "sidebarTitle": "压缩路由",
+  "sidebarTitle": "摘要路由",
   "sidebarHint": "查看和修改压缩摘要使用哪些模型。",
   "saveFailed": "保存失败",
   "notWritable": "当前配置不可写。",
