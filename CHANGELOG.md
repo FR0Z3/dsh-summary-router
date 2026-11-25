@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Coexist with a backend that already chose a summary model (the surcharge guard's per-rule route, a preset-level setting): when the request's provider matches the chain's first route, that model runs first with its own reasoning effort and the chain backs it up; when the provider differs, the chain stays in charge. Each attempt keeps its own effort.
+- Cover it on the real runtime: a configured summarization route on the shipped backend is preserved, and a cross-provider one is overridden.
+
 ## 0.1.1
 
 - Fix the chain aborting when a summary call throws before it returns a stream (missing adapter, credential failure, a middleware throwing). Dispatch now happens inside the attempt's guard, so such a throw is one failed route instead of the end of the chain — and the attempt's idle timer no longer leaks and holds the process.

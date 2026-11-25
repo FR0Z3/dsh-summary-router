@@ -16,7 +16,7 @@ const useInstalled = Boolean(install) && (process.versions.electron !== undefine
  * a 429 on the first route proves the fallback chain really takes over instead
  * of the switch failing with `MODEL_SWITCH_COMPACTION_FAILED`.
  */
-async function run({ summaryFailure = 'rate-limit', summaryThrows = false } = {}) {
+async function run({ summaryFailure = 'rate-limit', summaryThrows = false, engineSummary } = {}) {
   const require = createRequire(`${install}/package.json`)
   const load = name => import(pathToFileURL(require.resolve(`@deepseek-ai/${name}`)))
   const { Context, Service } = await load('cordis')
@@ -74,7 +74,13 @@ async function run({ summaryFailure = 'rate-limit', summaryThrows = false } = {}
   ctx.provide('sessions', { get: id => (id === session.id ? session : undefined), flush: async () => {} })
   ctx.provide('agents', { get: id => (id === session.id ? agent : undefined) })
   new TokenMeter(ctx)
-  const engine = new BasicCompactionEngine(ctx.isolate('compaction'), { auto: true, maxTokens: 65536 })
+  const engine = new BasicCompactionEngine(ctx.isolate('compaction'), {
+    auto: true,
+    maxTokens: 65536,
+    ...(engineSummary === undefined
+      ? {}
+      : { summarizationProvider: engineSummary.provider, summarizationModel: engineSummary.model }),
+  })
   ctx.provide('agentPresets', { serviceFor: () => engine })
 
   const user = text => createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text }] })
@@ -160,6 +166,46 @@ test('installed DSH: skipping the session route costs no failing attempt', { ski
     const config = await fx.switchRequest()
     assert.equal(config.provider, fx.target.provider)
     assert.deepEqual(fx.streams.map(entry => entry.provider), [fx.fallback.provider])
+  } finally {
+    await fiber.dispose()
+  }
+})
+
+test('installed DSH: the caller\'s same-provider summary model is kept first', { skip: !useInstalled }, async () => {
+  // A configured summarization route on the real backend is exactly how the
+  // surcharge guard picks a per-rule model, so this is the coexistence case.
+  const fx = await run({
+    summaryFailure: 'rate-limit',
+    engineSummary: { provider: 'sane', model: 'from-guard' },
+  })
+  const fiber = await mount(fx, {
+    switchSessionFirst: false,
+    switchRoutes: [{ provider: 'sane', model: 'fallback' }],
+  })
+  try {
+    const config = await fx.switchRequest()
+    assert.equal(config.provider, fx.target.provider)
+    assert.deepEqual(fx.streams.map(entry => `${entry.provider}/${entry.model}`), ['sane/from-guard'])
+    const summary = fx.session.snapshotEvents().find(event => event.type === 'compaction/summary')
+    assert.deepEqual([summary.data.provider, summary.data.model], ['sane', 'from-guard'])
+  } finally {
+    await fiber.dispose()
+  }
+})
+
+test('installed DSH: a different-provider summary choice is overridden by our chain', { skip: !useInstalled }, async () => {
+  const fx = await run({
+    summaryFailure: 'rate-limit',
+    engineSummary: { provider: 'sane', model: 'from-guard' },
+  })
+  const fiber = await mount(fx, {
+    switchSessionFirst: false,
+    switchRoutes: [{ provider: 'router', model: 'preferred' }],
+  })
+  try {
+    const config = await fx.switchRequest()
+    assert.equal(config.provider, fx.target.provider)
+    assert.deepEqual(fx.streams.map(entry => `${entry.provider}/${entry.model}`), ['router/preferred'])
   } finally {
     await fiber.dispose()
   }

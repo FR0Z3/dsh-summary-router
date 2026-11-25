@@ -212,6 +212,35 @@ test('other auxiliary purposes and unscoped calls are left alone', async () => {
   assert.equal(fx.calls.length, 0)
 })
 
+test('a same-provider explicit summary choice runs first, then the chain', async () => {
+  const fx = harness(
+    { pressureRoutes: [{ provider: 'codex-plus', model: 'sol', reasoningEffort: 'low' }] },
+    {
+      stream: options => (options.model === 'luna'
+        ? [rateLimit()]
+        : [delta('sum'), finish('stop')]),
+    },
+  )
+  fx.sessions.set('s1', sessionOf({ header: ['tianxun-1', 'flash'] }))
+  const result = await summarize(fx, {
+    provider: 'codex-plus',
+    model: 'luna',
+    reasoningEffort: 'high',
+  })
+  assert.deepEqual(fx.calls.map(call => `${call.provider}/${call.model}`), ['codex-plus/luna', 'codex-plus/sol'])
+  // Each attempt keeps its own effort: the caller's first, the chain's own after.
+  assert.equal(fx.calls[0].reasoningEffort, 'high')
+  assert.equal(fx.calls[1].reasoningEffort, 'low')
+  assert.deepEqual(result.chunks.at(-1), finish('stop'))
+})
+
+test('a different-provider explicit choice is overridden by our chain', async () => {
+  const fx = harness({ pressureRoutes: [{ provider: 'router-cheap', model: 'r1' }] })
+  fx.sessions.set('s1', sessionOf({ header: ['tianxun-1', 'flash'] }))
+  await summarize(fx, { provider: 'guard-cheap', model: 'g1' })
+  assert.deepEqual(fx.calls.map(call => call.provider), ['router-cheap'])
+})
+
 test('a route that throws before returning a stream still falls through', async () => {
   const fx = harness(
     { pressureRoutes: [{ provider: 'x', model: 'one' }, { provider: 'y', model: 'two' }] },

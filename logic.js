@@ -301,6 +301,35 @@ export function selectChain(config, context, forced) {
 }
 
 /**
+ * Keep an explicit summary choice another layer already made.
+ *
+ * A backend configured with its own summarization route — the surcharge guard's
+ * per-rule summary model, a preset-level override — puts that route on the
+ * request itself. When it names the same provider the chain would use first, the
+ * choice is preserved as the first attempt with its own reasoning effort, and the
+ * configured chain stays behind it as the fallback. A different provider keeps
+ * the chain in charge: cross-provider agreement cannot be assumed, and this
+ * plugin's job is the guarantee that a switch still compacts.
+ *
+ * @param chain - the resolved chain, first route first.
+ * @param requested - the provider/model/effort the caller already put on the request.
+ * @param committed - the session's committed request route, or absent.
+ * @returns the attempts to run, in order.
+ */
+export function withRequestedRoute(chain, requested, committed) {
+  if (chain.length === 0 || requested === undefined) return chain
+  if (committed === undefined) return chain
+  // No explicit choice: the request simply carries the session's own route.
+  if (requested.provider === committed.provider && requested.model === committed.model) return chain
+  if (requested.provider !== chain[0].provider) return chain
+  const preserved = { provider: requested.provider, model: requested.model, carryEffort: true }
+  const duplicates = route => route.provider === preserved.provider
+    && route.model === preserved.model
+    && (route.reasoningEffort ?? '') === (requested.reasoningEffort ?? '')
+  return [preserved, ...chain.filter(route => !duplicates(route))]
+}
+
+/**
  * Whether one route can physically serve this summary request.
  * @param route - candidate route.
  * @param evidence - context window, prompt size, output cap and safety margin.

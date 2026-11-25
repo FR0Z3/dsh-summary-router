@@ -19,6 +19,7 @@ import {
   routeLabel,
   scopeName,
   selectChain,
+  withRequestedRoute,
   workspaceFor,
 } from './logic.js'
 
@@ -229,7 +230,11 @@ async function runAttempt(ctx, options, route, timeoutMs) {
     ...forwarded,
     provider: route.provider,
     model: route.model,
-    ...(route.reasoningEffort === undefined ? {} : { reasoningEffort: route.reasoningEffort }),
+    ...(route.reasoningEffort === undefined
+      ? (route.carryEffort === true && options.reasoningEffort !== undefined
+        ? { reasoningEffort: options.reasoningEffort }
+        : {})
+      : { reasoningEffort: route.reasoningEffort }),
     ...(route.maxTokens === undefined
       ? (options.maxTokens === undefined ? {} : { maxTokens: options.maxTokens })
       : { maxTokens: route.maxTokens }),
@@ -548,13 +553,31 @@ export function apply(ctx, rawConfig) {
     // off it is still routed, but only through the global pressure chain.
     if (session === undefined && config.requireSession) return next()
     const state = stateFor(session)
+    const committed = session?.requestHeader?.()?.config
     const plan = selectChain(config, {
       cwd: cwdOf(session),
-      header: session?.requestHeader?.()?.config,
+      header: committed,
       pending: session === undefined ? undefined : routesOf(ctx, session).pending,
       override: session === undefined ? undefined : overrideOf(session, state),
     }, state.manualCompaction === true ? 'pressure' : undefined)
     if (plan === undefined) return next()
+    // Another layer (the surcharge guard's per-rule model, a preset override)
+    // may have chosen the summary route already. Same provider: keep its choice
+    // first and let our chain back it up. Different provider: our chain stays in
+    // charge, because that guarantee is what this plugin exists for.
+    const requested = {
+      provider: options.provider,
+      model: options.model,
+      reasoningEffort: options.reasoningEffort,
+    }
+    const chain = withRequestedRoute(plan.chain, requested, committed)
+    if (chain !== plan.chain) {
+      ctx.logger.info(
+        `${SCOPE}: keeping the caller's summary model ${routeLabel(requested)} as the first attempt `
+        + '— same provider as the configured chain',
+      )
+      return routeCompaction(ctx, config, { ...plan, chain }, options, state)
+    }
     return routeCompaction(ctx, config, plan, options, state)
   }, { global: true, prepend: true })
 
@@ -562,8 +585,7 @@ export function apply(ctx, rawConfig) {
    * Per-session override command: `/compact-model` reports the effective routes,
    * `/compact-model off` clears the override, and `/compact-model provider/model`
    * (optionally with a reasoning effort) points both chains at one route.
-   */  ctx.inject(['commands'], scope => {
-    scope.effect(() => scope.commands.register({
+   */  ctx.inject(['commands'], scope => {    scope.effect(() => scope.commands.register({
       name: 'compact-model',
       description: 'Choose the model that writes this session\'s compaction summaries',
       input: { hint: '<provider>/<model> [effort] | off' },

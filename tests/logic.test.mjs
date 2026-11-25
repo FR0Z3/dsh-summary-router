@@ -14,6 +14,7 @@ import {
   pathKey,
   selectChain,
   withOwnRoute,
+  withRequestedRoute,
   workspaceFor,
 } from '../logic.js'
 
@@ -181,6 +182,36 @@ test('a route that cannot hold the prefix is reported, not attempted', () => {
   // because the arithmetic is unknown would silently disable the plugin.
   assert.equal(fitRoute(route('a', 'b'), { contextWindow: 200000, promptTokens: undefined }).fits, true)
   assert.equal(fitRoute(route('a', 'b'), { contextWindow: 200000, promptTokens: NaN }).fits, true)
+})
+
+test('an explicit same-provider summary choice stays first, backed by the chain', () => {
+  const chain = [route('codex-plus', 'sol', { reasoningEffort: 'low' }), route('safe', 'luna')]
+  const committed = route('tianxun-1', 'flash')
+  const requested = route('codex-plus', 'luna', { reasoningEffort: 'high' })
+  const planned = withRequestedRoute(chain, requested, committed)
+  assert.deepEqual(planned.map(item => `${item.provider}/${item.model}:${item.reasoningEffort ?? ''}`),
+    ['codex-plus/luna:', 'codex-plus/sol:low', 'safe/luna:'])
+  assert.equal(planned[0].carryEffort, true, 'the first attempt keeps the caller effort')
+})
+
+test('a different provider leaves the configured chain in charge', () => {
+  const chain = [route('router-cheap', 'r1')]
+  const planned = withRequestedRoute(chain, route('guard-cheap', 'g1'), route('tianxun-1', 'flash'))
+  assert.equal(planned, chain)
+})
+
+test('the session route is not an explicit choice', () => {
+  const chain = [route('router-cheap', 'r1')]
+  const committed = route('tianxun-1', 'flash')
+  assert.equal(withRequestedRoute(chain, committed, committed), chain)
+  assert.equal(withRequestedRoute(chain, committed, undefined), chain)
+})
+
+test('the same model with another effort remains a separate attempt', () => {
+  const chain = [route('codex-plus', 'luna', { reasoningEffort: 'low' })]
+  const planned = withRequestedRoute(chain, route('codex-plus', 'luna', { reasoningEffort: 'high' }), route('t', 'f'))
+  assert.equal(planned.length, 2)
+  assert.equal(planned[1].reasoningEffort, 'low')
 })
 
 test('the breaker re-arms only after the rules change', () => {

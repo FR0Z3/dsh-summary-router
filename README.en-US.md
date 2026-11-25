@@ -45,6 +45,17 @@ An empty chain means the trigger is not rerouted at all, exactly as if the plugi
 
 When `dsh-better-sidebar` is installed the plugin registers a "Compaction router" tab (start page card, bottom `+` menu, and the native right pane). Without it the plugin simply shows up in DSH settings.
 
+## Coexistence with surcharge-guard
+
+Both plugins can stay enabled. The rule is decided by the route on the summary request itself:
+
+- **Request route ≠ the session's committed route** → an upstream layer (the guard's per-rule summary model, a preset-level summary setting) already chose a model.
+  - **Same provider as the chain's first route**: its model runs first with its own reasoning effort, and our chain backs it up; later attempts keep their own efforts.
+  - **Different provider**: our chain stays in charge. Cross-provider agreement cannot be assumed, and an unblocked model switch is what this plugin exists for.
+- **Request route = the session's committed route** → no upstream choice; the chains apply normally.
+
+`switchSessionFirst: true` makes the switch chain start at the session's own route, so a guard target on another provider falls into the "different provider" case above and is overridden.
+
 ## Limits
 
 - **Not a billing cap**: every attempt in a fallback chain is a real provider call. Longer chains cost more in the worst case.
