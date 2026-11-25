@@ -26,7 +26,7 @@ It does not decide **when** compaction happens, change any threshold, or act as 
 
 ## Install
 
-Install `github:GT-610/dsh-summary-router` from the DSH plugins page (or point a `link:` spec at a local checkout while developing), enable it, then open **Plugins → Summary router**. Refresh the page once after enabling so the client bundle loads.
+Install `github:FR0Z3/dsh-summary-router` from the DSH plugins page (or point a `link:` spec at a local checkout while developing), enable it, then open **Plugins → Summary router**. Refresh the page once after enabling so the client bundle loads.
 
 ## Usage
 
