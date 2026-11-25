@@ -1,6 +1,6 @@
 {
   "name": "dsh-summary-router",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Choose which provider and model write DeepSeek Harness compaction summaries, per session and per workspace, with fallback chains.",
   "keywords": [
     "dsh",

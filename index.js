@@ -449,6 +449,25 @@ function statusText(config, evidence) {
   return lines.join('\n')
 }
 
+/** Warn when a pinned route's window cannot hold the history already on disk. */
+function fitWarning(ctx, session, route, info, marginTokens) {
+  const window = info?.context?.contextWindow
+  if (!Number.isSafeInteger(window) || window <= 0) return ''
+  const meter = ctx.get('tokenMeter')
+  if (meter === undefined || typeof meter.measure !== 'function') return ''
+  let used
+  try {
+    used = meter.measure(session)?.totalTokens
+  } catch {
+    return ''
+  }
+  if (!Number.isSafeInteger(used) || used < 0) return ''
+  const cap = route.maxTokens ?? info?.defaultMaxTokens ?? 0
+  if (used + cap + marginTokens <= window) return ''
+  return ` Current history is about ${used} tokens and that route's window is ${window}; `
+    + 'the route will be skipped until the history shrinks.'
+}
+
 export function apply(ctx, rawConfig) {
   /** Per-session breaker and override bookkeeping, keyed by the session object itself. */
   const states = new WeakMap()
@@ -585,7 +604,9 @@ export function apply(ctx, rawConfig) {
    * Per-session override command: `/compact-model` reports the effective routes,
    * `/compact-model off` clears the override, and `/compact-model provider/model`
    * (optionally with a reasoning effort) points both chains at one route.
-   */  ctx.inject(['commands'], scope => {    scope.effect(() => scope.commands.register({
+   */
+  ctx.inject(['commands'], scope => {
+    scope.effect(() => scope.commands.register({
       name: 'compact-model',
       description: 'Choose the model that writes this session\'s compaction summaries',
       input: { hint: '<provider>/<model> [effort] | off' },
@@ -599,10 +620,11 @@ export function apply(ctx, rawConfig) {
           return { kind: 'error', text: `The summary router configuration is unusable: ${problem}` }
         }
         const argument = String(rawInput ?? '').trim()
-        if (argument.length === 0 || argument === 'status') {
+        const keyword = argument.toLowerCase()
+        if (argument.length === 0 || keyword === 'status') {
           return { kind: 'success', text: statusText(normalizeConfig(rawConfig), evidence) }
         }
-        if (argument === 'off') {
+        if (keyword === 'off') {
           state.override = undefined
           state.overrideLoaded = true
           const persisted = await appendRecord(ctx, session, { cleared: true })
@@ -613,6 +635,9 @@ export function apply(ctx, rawConfig) {
           }
         }
         const [head, ...rest] = argument.split(/\s+/)
+        if (rest.length > 1) {
+          return { kind: 'error', text: 'A route is <provider>/<model> followed by at most one reasoning effort.' }
+        }
         const slash = head.indexOf('/')
         if (slash <= 0 || slash === head.length - 1) {
           return { kind: 'error', text: 'Use /compact-model <provider>/<model> [effort], off, or no argument.' }
@@ -625,14 +650,31 @@ export function apply(ctx, rawConfig) {
         if (route === undefined) {
           return { kind: 'error', text: 'Both a provider and a model are required.' }
         }
-        // Fail a typo here instead of spending a compaction attempt later.
+        // Fail a typo here instead of spending every later compaction attempt on
+        // it: the model must resolve, and a chosen effort must be servable.
+        let info
         if (typeof ctx.llm.resolveModelInfo === 'function') {
           try {
-            await ctx.llm.resolveModelInfo(route.provider, route.model)
+            info = await ctx.llm.resolveModelInfo(route.provider, route.model, signal)
           } catch (error) {
             return { kind: 'error', text: `That route is not usable: ${errorMessage(error)}` }
           }
         }
+        if (route.reasoningEffort !== undefined && typeof ctx.llm.resolveCallConfig === 'function') {
+          try {
+            await ctx.llm.resolveCallConfig({
+              provider: route.provider,
+              model: route.model,
+              reasoningEffort: route.reasoningEffort,
+            }, signal)
+          } catch (error) {
+            return {
+              kind: 'error',
+              text: `That effort is not usable on ${routeLabel(route)}: ${errorMessage(error)}`,
+            }
+          }
+        }
+        if (signal?.aborted) return { kind: 'error', text: 'Compaction route change cancelled.' }
         const selection = { switchRoutes: [route], pressureRoutes: [route], sessionFirst: false }
         state.override = normalizeSessionOverride(selection)
         state.overrideLoaded = true
@@ -640,6 +682,7 @@ export function apply(ctx, rawConfig) {
         return {
           kind: 'success',
           text: `Compaction summaries for this session now use ${routeLabel(route)}.`
+            + `${fitWarning(ctx, session, route, info, normalizeConfig(rawConfig).safetyMarginTokens)}`
             + `${persisted ? '' : ' (not persisted: the session log could not be written)'}`,
         }
       },

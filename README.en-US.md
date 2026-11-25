@@ -42,11 +42,16 @@ Under **Plugins → Summary router**:
 
 An empty chain means the trigger is not rerouted at all, exactly as if the plugin were absent.
 
+> **Per-session overrides have no UI**: DSH's settings page is profile-scoped and cannot tell which session it is editing, so the page owns only the global and workspace layers. A single session's route is set **only through the command below** (it is written to that session's log and survives resume).
+
 ### Session command
 
-- `/compact-model` prints the effective chains plus the session's committed and pending routes.
+- `/compact-model` self-checks: `enabled`, the matched `workspace`, both chains with their source and order, the `active` trigger this call would use, plus `session route` (committed) and `pending route` (pending switch).
 - `/compact-model provider/model [effort]` pins one route for this session (both chains, and it skips the "own model first" step). It is written to the session log as a `plugin:` record, so it survives resume.
-- `/compact-model off` clears the session override.
+  - It pre-checks before pinning: the route must resolve (`resolveModelInfo`), a chosen effort must be servable on that model (`resolveCallConfig`), and if the current history no longer fits the route's window it says so ("will be skipped").
+  - More than one effort token is a usage error instead of being silently ignored.
+- `/compact-model off` clears the session override and returns to the global/workspace chains (case-insensitive).
+- If the log write fails, the success reply says "not persisted" instead of pretending.
 
 ### BetterSidebar
 

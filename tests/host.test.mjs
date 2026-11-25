@@ -11,7 +11,10 @@ function harness(config, services = {}) {
   const commands = []
   const calls = []
   const injected = []
-  const meter = { estimateMessage: message => message.tokens ?? 0 }
+  const meter = {
+    estimateMessage: message => message.tokens ?? 0,
+    measure: () => ({ totalTokens: services.pressureTokens ?? 0 }),
+  }
   const llm = {
     stream(options) {
       calls.push(options)
@@ -28,6 +31,9 @@ function harness(config, services = {}) {
     },
     async resolveModelInfo(provider, model) {
       return services.modelInfo?.(provider, model) ?? { context: { contextWindow: 1_000_000 } }
+    },
+    async resolveCallConfig(config) {
+      return services.resolveCallConfig === undefined ? config : services.resolveCallConfig(config)
     },
   }
   const ctx = {
@@ -411,6 +417,53 @@ test('a failed compaction posts no notice, and the switch is silent by default',
   quiet.emit('session/event', quietSession, { type: 'compaction/end', data: {} })
   await new Promise(resolve => setImmediate(resolve))
   assert.equal(quiet.injected.length, 0, 'announceReroute defaults off')
+})
+
+test('the command rejects an effort the route cannot serve', async () => {
+  const fx = harness(
+    { pressureRoutes: [] },
+    {
+      resolveCallConfig: config => {
+        if (config.reasoningEffort === 'bogus') throw new Error('does not support reasoning effort "bogus"')
+        return config
+      },
+    },
+  )
+  const session = sessionOf()
+  fx.sessions.set('s1', session)
+  const command = fx.commands.find(definition => definition.name === 'compact-model')
+  const result = await command.handler({ agent: { session }, rawInput: 'p/m bogus' })
+  assert.equal(result.kind, 'error')
+  assert.match(result.text, /effort is not usable/)
+})
+
+test('the command warns when the pinned route cannot hold the current history', async () => {
+  const fx = harness(
+    { pressureRoutes: [] },
+    { modelInfo: () => ({ context: { contextWindow: 1000 }, defaultMaxTokens: 100 }), pressureTokens: 900 },
+  )
+  const session = sessionOf()
+  fx.sessions.set('s1', session)
+  const command = fx.commands.find(definition => definition.name === 'compact-model')
+  const result = await command.handler({ agent: { session }, rawInput: 'small/model' })
+  assert.equal(result.kind, 'success')
+  assert.match(result.text, /will be skipped/)
+})
+
+test('the command rejects extra tokens and accepts a case-insensitive off', async () => {
+  const fx = harness({ pressureRoutes: [{ provider: 'cheap', model: 'small' }] })
+  const session = sessionOf()
+  fx.sessions.set('s1', session)
+  const command = fx.commands.find(definition => definition.name === 'compact-model')
+  const extra = await command.handler({ agent: { session }, rawInput: 'p/m low extra' })
+  assert.equal(extra.kind, 'error')
+  assert.match(extra.text, /at most one reasoning effort/)
+
+  await command.handler({ agent: { session }, rawInput: 'pinned/model' })
+  const cleared = await command.handler({ agent: { session }, rawInput: 'OFF' })
+  assert.equal(cleared.kind, 'success')
+  await summarize(fx)
+  assert.equal(fx.calls.at(-1).provider, 'cheap', 'the session falls back to the configured chain')
 })
 
 test('the session command pins a route and clears it again', async () => {
