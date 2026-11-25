@@ -1,7 +1,7 @@
 /**
  * Browser half of the summary router: the settings page and the optional
  * BetterSidebar tab. Both render the same panel, so a profile without the third
- * party sidebar still gets a full editor under Plugins → Summary router.
+ * party sidebar still gets a full editor under Settings → Summary router.
  *
  * The bundle is a browser artifact: it registers itself through the module
  * loader and has no `export` statements of its own.
@@ -59,8 +59,7 @@ window.__ModuleLoader__.load({
       "sidebarTitle": "摘要路由",
       "sidebarHint": "查看和修改压缩摘要使用哪些模型。",
       "saveFailed": "保存失败",
-      "notWritable": "当前配置不可写。",
-      "openSettings": "打开插件设置"
+      "notWritable": "当前配置不可写。"
     }
     const en = {
       "intro": "Compaction summary requests are routed to the models you choose. Session, then workspace, then global: the closest scope wins.",
@@ -106,8 +105,7 @@ window.__ModuleLoader__.load({
       "sidebarTitle": "Summary router",
       "sidebarHint": "See and change the models compaction summaries use.",
       "saveFailed": "Save failed",
-      "notWritable": "This configuration is not writable.",
-      "openSettings": "Open plugin settings"
+      "notWritable": "This configuration is not writable."
     }
 
     const styles = {

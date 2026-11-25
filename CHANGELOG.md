@@ -6,6 +6,7 @@
 - Reject more than one effort token as a usage error, accept `off`/`status` case-insensitively, and forward the command's abort signal to the route pre-check.
 - Document that per-session overrides have no UI: the settings page cannot see the current session, so a single session's route is set only by the command.
 - Correct the READMEs: the panel is under Settings → Summary router (not Plugins), note the DSH/Node requirements, link the field reference, sharpen the `switchSessionFirst` guidance, and untangle the route-record limit from the session override.
+- Drop an unused locale string and correct the client header comment about where the panel lives.
 
 ## 0.2.0
 

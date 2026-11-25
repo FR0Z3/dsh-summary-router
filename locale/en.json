@@ -47,6 +47,5 @@
   "sidebarTitle": "Summary router",
   "sidebarHint": "See and change the models compaction summaries use.",
   "saveFailed": "Save failed",
-  "notWritable": "This configuration is not writable.",
-  "openSettings": "Open plugin settings"
+  "notWritable": "This configuration is not writable."
 }

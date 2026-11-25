@@ -47,6 +47,5 @@
   "sidebarTitle": "摘要路由",
   "sidebarHint": "查看和修改压缩摘要使用哪些模型。",
   "saveFailed": "保存失败",
-  "notWritable": "当前配置不可写。",
-  "openSettings": "打开插件设置"
+  "notWritable": "当前配置不可写。"
 }
