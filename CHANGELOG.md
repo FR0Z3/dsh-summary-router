@@ -5,6 +5,7 @@
 - `/compact-model` now validates a chosen reasoning effort against the route (`resolveCallConfig`) and warns when the current history no longer fits the pinned route's window, instead of leaving both failures to the first compaction attempt.
 - Reject more than one effort token as a usage error, accept `off`/`status` case-insensitively, and forward the command's abort signal to the route pre-check.
 - Document that per-session overrides have no UI: the settings page cannot see the current session, so a single session's route is set only by the command.
+- Correct the READMEs: the panel is under Settings → Summary router (not Plugins), note the DSH/Node requirements, link the field reference, sharpen the `switchSessionFirst` guidance, and untangle the route-record limit from the session override.
 
 ## 0.2.0
 

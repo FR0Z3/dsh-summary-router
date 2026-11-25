@@ -10,7 +10,7 @@ DSH writes compaction summaries with the session's routed model. At a model swit
 
 - the switch is priced against the **new** model's window, but the summary request still goes to the **old** model;
 - when the old route returns 429 or nothing within the upstream's 30s first-token limit, compaction fails and the switch is refused (`MODEL_SWITCH_COMPACTION_FAILED`); the pending selection stays queued, so every step retries and fails again;
-- DSH's own `summarizationProvider`/`summarizationModel` fields solve this, but no shipped preset sets them and no UI exposes them.
+- DSH's own `summarizationProvider`/`summarizationModel` fields solve this, but no shipped preset sets them and no settings page exposes them.
 
 ## How it works
 
@@ -26,21 +26,25 @@ It does not decide **when** compaction happens, change any threshold, or act as 
 
 ## Install
 
-Install `github:FR0Z3/dsh-summary-router` from the DSH plugins page (or point a `link:` spec at a local checkout while developing), enable it, then open **Plugins → Summary router**. Refresh the page once after enabling so the client bundle loads.
+Install `github:FR0Z3/dsh-summary-router` from the DSH plugins page (or point a `link:` spec at a local checkout while developing), enable it, then refresh the page once so the client bundle loads.
+
+Requires DSH `0.2.2-rc.1` or newer and Node `22.19`+ (developed against DSH `0.2.2-rc.5`). The panel lives under **Settings → Summary router**; the plugin detail page's config tab shows the same panel.
 
 ## Usage
 
-Under **Plugins → Summary router**:
+Under **Settings → Summary router** (the plugin detail page's config tab shows the same panel):
 
 | Goal | Action |
 |---|---|
 | Cheap model for automatic compaction | add a route to the "cheap chain" |
-| Stop model switches from being blocked | add a reliable route to the "fallback chain"; keep "try the session's own model first" on |
+| Stop model switches from being blocked | add a reliable route to the "fallback chain"; "try the session's own model first" is on by default and costs one extra call only when the old route is occasionally flaky — turn it off when the old route itself is unreliable |
 | Per-workspace routing | add a workspace path with its own routes; an empty list inherits the global chain |
 | Per-session routing | run `/compact-model provider/model [effort]` in the session |
 | See when routing fires | turn on "Announce rerouted summaries"; each summary written by another model leaves one line in the session |
 
 An empty chain means the trigger is not rerouted at all, exactly as if the plugin were absent.
+
+Advanced holds the window safety margin, the per-attempt timeout, the cool-down after a total failure, and the auxiliary purposes to match; field reference is in [docs/DETAIL.md](docs/DETAIL.md).
 
 > **Per-session overrides have no UI**: DSH's settings page is profile-scoped and cannot tell which session it is editing, so the page owns only the global and workspace layers. A single session's route is set **only through the command below** (it is written to that session's log and survives resume).
 
@@ -74,7 +78,7 @@ Both plugins can stay enabled. The rule is decided by the route on the summary r
 - A route's `maxTokens` only affects that call and the window arithmetic; DSH's `compaction/summary` record keeps the backend's own cap, and the plugin logs the cap it actually sent.
 - A summary call replays the whole conversation prefix, so the chosen model must hold prefix + output cap + safety margin. Small cheaper models only work while the history is small; a route that cannot hold the request is skipped and the numbers are logged.
 - The plugin cannot fix an upstream gateway's own first-token limit; it switches to a route that does work.
-- The session override is written to the session log, and the successful route is written back onto the request, so `compaction/summary` names the model that actually wrote the summary.
+- After a successful reroute the plugin writes the actual route back onto that request, so `compaction/summary` names the model that really wrote the summary.
 - The line posted by "Announce rerouted summaries" enters the model context and is billed like any other line; it is off by default.
 - Subagent sessions carry their own `sessionId` and are routed too; restrict them per workspace if that is unwanted.
 - Only tagged auxiliary calls are intercepted. A third-party compaction backend that builds its own call without the `compaction` purpose needs its purpose added to "Auxiliary call purposes".
