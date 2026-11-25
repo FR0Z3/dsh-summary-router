@@ -3,6 +3,7 @@
 ## 0.2.0
 
 - Rename the package to dsh-summary-router: the settings namespace, Loader row id, plugin-record type and settings titles follow. The plugin routes *summary* writes, not compaction policy, and the old name collided with that reading.
+- Document installation steps, state explicitly that the plugin does not decide when compaction happens, and fix a duplicated bullet in the English README.
 
 ## 0.1.2
 

@@ -18,8 +18,15 @@ DSH writes compaction summaries with the session's routed model. At a model swit
 2. It reads the session log: a committed request route that differs from the pending model selection means a **switch** compaction. A manual `/compact` opens its own transaction marker (`compaction/start` with a command id) and always uses the automatic chain, so selecting a new model without sending a message cannot misclassify it.
 3. Routes are tried in order. Each one is checked against its own context window (messages + tool schemas + output cap + safety margin) and skipped when it cannot hold the request; each attempt has its own idle timeout.
 4. The first successful summary is handed back unchanged. Failed routes only log a warning with the usage they already burned.
-5. When every route fails, the call fails loudly (the message appears inside DSH's own compaction failure) and the session fails fast for the configured cool-down; any configuration change re-arms it immediately.
 5. When every route fails, the call fails loudly (the message appears inside DSH's own compaction failure) and the session fails fast for the configured cool-down, so repeated steps do not spend money again; any configuration change re-arms it immediately.
+
+## What it does not do
+
+It does not decide **when** compaction happens, change any threshold, or act as a billing guard. Those belong to a compaction-policy plugin (for example surcharge-guard); this one only decides which provider and model write the summary, and what to try when they fail.
+
+## Install
+
+Install `github:GT-610/dsh-summary-router` from the DSH plugins page (or point a `link:` spec at a local checkout while developing), enable it, then open **Plugins → Summary router**. Refresh the page once after enabling so the client bundle loads.
 
 ## Usage
 
@@ -59,9 +66,11 @@ Both plugins can stay enabled. The rule is decided by the route on the summary r
 ## Limits
 
 - **Not a billing cap**: every attempt in a fallback chain is a real provider call. Longer chains cost more in the worst case.
+- A route's `maxTokens` only affects that call and the window arithmetic; DSH's `compaction/summary` record keeps the backend's own cap, and the plugin logs the cap it actually sent.
 - A summary call replays the whole conversation prefix, so the chosen model must hold prefix + output cap + safety margin. Small cheaper models only work while the history is small; a route that cannot hold the request is skipped and the numbers are logged.
 - The plugin cannot fix an upstream gateway's own first-token limit; it switches to a route that does work.
 - The session override is written to the session log, and the successful route is written back onto the request, so `compaction/summary` names the model that actually wrote the summary.
+- The line posted by "Announce rerouted summaries" enters the model context and is billed like any other line; it is off by default.
 - Subagent sessions carry their own `sessionId` and are routed too; restrict them per workspace if that is unwanted.
 - Only tagged auxiliary calls are intercepted. A third-party compaction backend that builds its own call without the `compaction` purpose needs its purpose added to "Auxiliary call purposes".
 
