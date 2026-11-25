@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" role="img" aria-label="Compaction router">
+  <defs>
+    <linearGradient id="cr-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f8ee0"/>
+      <stop offset="1" stop-color="#2668b8"/>
+    </linearGradient>
+  </defs>
+  <!-- One summary request leaves the history. -->
+  <circle cx="8" cy="18" r="3.2" fill="#2a6dbd"/>
+  <!-- It is routed to the chosen model; the other branch is the fallback. -->
+  <path d="M11.2 18H21" stroke="#2a6dbd" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M21 11.5h7" stroke="#d8524a" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="3.4 3"/>
+  <path d="M21 24.5h7" stroke="#2a6dbd" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M18.4 15.4 21 18l-2.6 2.6" fill="none" stroke="#2a6dbd" stroke-width="2.2" stroke-linecap="round"/>
+  <rect x="26" y="21.6" width="6" height="5.8" rx="1.4" fill="url(#cr-fill)"/>
+  <rect x="26" y="8.7" width="6" height="5.8" rx="1.4" fill="none" stroke="#d8524a" stroke-width="1.6"/>
+</</svg>
